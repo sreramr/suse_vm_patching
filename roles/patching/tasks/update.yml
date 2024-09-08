@@ -1,0 +1,44 @@
+- name: Apply all available patches
+  become: yes
+  community.general.zypper:
+    name: '*'
+    state: latest
+    type: patch
+
+# New tasks to be added after applying patches
+- name: Reboot the server
+  become: yes
+  ansible.builtin.shell: shutdown -r now "Rebooting server after patching"
+  async: 1
+  poll: 0
+
+- name: Wait for 1 minute after reboot
+  pause:
+    minutes: 1
+
+- name: Check if the server is up
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 22
+    delay: 10
+    timeout: 300
+    state: started
+
+- name: Execute uname -a
+  become: yes
+  shell: uname -a
+  register: uname_output
+
+- name: Display uname -a output
+  debug:
+    msg: "{{ uname_output.stdout }}"
+
+- name: Execute cat /etc/*release
+  become: yes
+  shell: cat /etc/*release
+  register: release_output
+
+- name: Display /etc/*release output
+  debug:
+    msg: "{{ release_output.stdout }}"
+    

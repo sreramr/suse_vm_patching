@@ -1,0 +1,22 @@
+- name: Ensure correct repositories are being used
+  command: zypper lr
+  register: repo_list
+  failed_when: repo_list.rc != 0
+
+- name: Check for all available updates
+  command: zypper lu
+  register: update_list
+  failed_when: update_list.rc != 0
+
+- name: Display raw update list
+  debug:
+    msg: "{{ update_list.stdout }}"
+
+- name: Filter kernel updates from the update list
+  shell: echo "{{ update_list.stdout }}" | grep -i kernel || echo "No kernel updates found."
+  register: kernel_updates
+  failed_when: false
+
+- name: Display kernel update status
+  debug:
+    msg: "{{ kernel_updates.stdout }}"

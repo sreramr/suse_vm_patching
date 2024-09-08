@@ -1,0 +1,44 @@
+- name: Ensure the target directory exists
+  become: yes
+  file:
+    path: /home/sreramrathnam/temp
+    state: directory
+    mode: '0755'
+    
+- name: Copy validate.sh script to target server
+  become: yes
+  copy:
+    src: /home/sreram/Ansible/suse/validate.sh
+    dest: /home/sreramrathnam/temp/validate.sh
+    mode: '0755'  # Set execute permissions for the owner    
+
+- name: Run validate.sh script before patching and capture output
+  shell: /home/sreramrathnam/temp/validate.sh
+  register: validate_status
+  failed_when: validate_status.rc != 0
+
+- name: Save validate.sh output to a text file
+  become: yes
+  copy:
+    content: "{{ validate_status.stdout }}"
+    dest: /home/sreramrathnam/temp/pldfanc0429pmdfadulh01_before_30_07_2024.txt
+
+- name: Debug output of validate.sh
+  debug:
+    msg: "{{ validate_status.stdout }}"
+
+- name: Create VM snapshot
+  community.vmware.vmware_guest_snapshot:
+    hostname: "{{ hostvars['vm1']['vcenter_host'] }}"
+    username: "{{ hostvars['vm1']['vcenter_user'] }}"
+    password: "{{ hostvars['vm1']['vcenter_password'] }}"
+    validate_certs: no
+    datacenter: "Madurai"
+    folder: "/VM-Automation/"
+    name: "suse01"
+    snapshot_name: "snap1"
+    description: "Snapshot before patching"
+    state: present
+  delegate_to: localhost
+  vars:
+    ansible_python_interpreter: /home/sreram/Ansible/suse/lib/bin/python3

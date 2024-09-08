@@ -1,0 +1,11 @@
+- name: Run pre-checks and collect server configuration backup
+  include_tasks: pre_checks.yml
+
+- name: Take VM snapshot backup
+  include_tasks: backup.yml
+
+- name: Update Linux to the latest SP5 versions
+  include_tasks: update.yml
+
+- name: Validate server configuration after update
+  include_tasks: validate.yml
